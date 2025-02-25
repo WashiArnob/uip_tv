@@ -4,6 +4,8 @@ import 'package:hive/hive.dart';
 import 'package:get/get.dart';
 import 'package:uip_tv/controllers/movie_controller.dart';
 import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:uip_tv/utils/app_constants.dart';
 
 class MovieService {
   static const String boxName = 'moviesBox';
@@ -43,11 +45,18 @@ class MovieController extends GetxController {
   void fetchTrendingMovies() async {
     try {
       isLoading(true);
-      var response = await http.get(Uri.parse("https://api.themoviedb.org/3/trending/movie/week?api_key=YOUR_API_KEY"));
+      var response = await http.get(Uri.parse(AppConstants.trendingMoviesUrl));
       if (response.statusCode == 200) {
-        var movies = jsonDecode(response.body)['results'];
-        trendingMovies.value = movies;
-        await MovieService.saveMoviesToHive('trending', movies);
+        var jsonData = jsonDecode(response.body);
+        if (jsonData.containsKey('results')) {
+          var movies = jsonData['results'];
+          trendingMovies.value = movies;
+          await MovieService.saveMoviesToHive('trending', movies);
+        } else {
+          print("Error: 'results' key missing in API response");
+        }
+      } else {
+        print("API Error: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching Trending Movies: $e");
@@ -58,11 +67,18 @@ class MovieController extends GetxController {
 
   void fetchContinueWatching() async {
     try {
-      var response = await http.get(Uri.parse("https://api.themoviedb.org/3/movie/popular?api_key=YOUR_API_KEY"));
+      var response = await http.get(Uri.parse(AppConstants.continueWatchingUrl));
       if (response.statusCode == 200) {
-        var movies = jsonDecode(response.body)['results'];
-        continueWatching.value = movies;
-        await MovieService.saveMoviesToHive('continueWatching', movies);
+        var jsonData = jsonDecode(response.body);
+        if (jsonData.containsKey('results')) {
+          var movies = jsonData['results'];
+          continueWatching.value = movies;
+          await MovieService.saveMoviesToHive('continueWatching', movies);
+        } else {
+          print("Error: 'results' key missing in API response");
+        }
+      } else {
+        print("API Error: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching Continue Watching: $e");
@@ -71,14 +87,22 @@ class MovieController extends GetxController {
 
   void fetchRecommendedMovies() async {
     try {
-      var response = await http.get(Uri.parse("https://api.themoviedb.org/3/movie/top_rated?api_key=YOUR_API_KEY"));
+      var response = await http.get(Uri.parse(AppConstants.recommendedMoviesUrl));
       if (response.statusCode == 200) {
-        var movies = jsonDecode(response.body)['results'];
-        recommendedMovies.value = movies;
-        await MovieService.saveMoviesToHive('recommended', movies);
+        var jsonData = jsonDecode(response.body);
+        if (jsonData.containsKey('results')) {
+          var movies = jsonData['results'];
+          recommendedMovies.value = movies;
+          await MovieService.saveMoviesToHive('recommended', movies);
+        } else {
+          print("Error: 'results' key missing in API response");
+        }
+      } else {
+        print("API Error: ${response.statusCode}");
       }
     } catch (e) {
       print("Error fetching Recommended Movies: $e");
     }
   }
 }
+
